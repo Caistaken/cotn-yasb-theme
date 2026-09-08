@@ -14,6 +14,7 @@ A clean, dark, monochrome YASB (Yet Another Status Bar) setup featuring an ultra
       
    </p>
 </div>
+
 ## Features
 
 - Local Network Notification Bridge: Receive instant alerts from apps like WhatsApp, X (Twitter), Instagram, and Discord directly on your status bar.
