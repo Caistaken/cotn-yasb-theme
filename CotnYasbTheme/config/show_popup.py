@@ -5,19 +5,35 @@ from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QFrame, QScrollArea, QPushButton
 )
-from PyQt6.QtCore import Qt, QEvent
+from PyQt6.QtCore import Qt, QAbstractNativeEventFilter
 from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 
 DATA_FILE = os.path.expanduser(r"~\.config\yasb\phone_notifications.json")
 SERVER_NAME = "yasb_fast_phone_popup"
 
+class FocusLossFilter(QAbstractNativeEventFilter):
+    def __init__(self, popup):
+        super().__init__()
+        self.popup = popup
+
+    def nativeEventFilter(self, eventType, message):
+        # Windows mesajlarını (WM_ACTIVATE = 0x0006, WA_INACTIVE = 0) yakalar
+        if eventType == b"windows_generic_MSG":
+            import ctypes
+            from ctypes import wintypes
+            msg = ctypes.cast(int(message), ctypes.POINTER(wintypes.MSG)).contents
+            if msg.message == 0x0006 and (msg.wParam & 0xFFFF) == 0:
+                if self.popup.isVisible():
+                    self.popup.hide()
+        return False, 0
+
 class FastNotificationPopup(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowFlags(
-            Qt.WindowType.Tool | 
+            Qt.WindowType.Popup | 
             Qt.WindowType.FramelessWindowHint | 
-            Qt.WindowType.WindowStaysOnTopHint
+            Qt.WindowType.NoDropShadowWindowHint
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setFixedWidth(340)
@@ -41,7 +57,7 @@ class FastNotificationPopup(QWidget):
         header_bar = QHBoxLayout()
         header_bar.setContentsMargins(0, 0, 0, 0)
 
-        title_label = QLabel("Bildirim Geçmişi")
+        title_label = QLabel("Notification History")
         title_label.setStyleSheet("""
             color: #f3f4f6;
             font-size: 12px;
@@ -50,7 +66,7 @@ class FastNotificationPopup(QWidget):
             font-family: 'SpaceMono Nerd Font', monospace;
         """)
 
-        self.clear_all_btn = QPushButton("Temizle")
+        self.clear_all_btn = QPushButton("Clear")
         self.clear_all_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.clear_all_btn.setStyleSheet("""
             QPushButton {
@@ -118,19 +134,6 @@ class FastNotificationPopup(QWidget):
         self.c_layout.addWidget(self.scroll)
         main_layout.addWidget(self.container)
 
-        QApplication.instance().installEventFilter(self)
-
-    def eventFilter(self, obj, event):
-        if event.type() == QEvent.Type.ApplicationDeactivate and self.isVisible():
-            self.hide()
-        return super().eventFilter(obj, event)
-
-    def changeEvent(self, event):
-        if event.type() == QEvent.Type.ActivationChange:
-            if not self.isActiveWindow() and self.isVisible():
-                self.hide()
-        super().changeEvent(event)
-
     def load_data(self):
         if os.path.exists(DATA_FILE):
             try:
@@ -185,7 +188,7 @@ class FastNotificationPopup(QWidget):
                 top_row = QHBoxLayout()
                 top_row.setContentsMargins(0, 0, 0, 0)
 
-                app_name = n.get("app", "Bildirim")
+                app_name = n.get("app", "Notification")
                 title_text = n.get("title", "")
                 header_text = f"{app_name} • {title_text}".strip(" •")
                 
@@ -241,7 +244,7 @@ class FastNotificationPopup(QWidget):
             self.adjustSize()
         else:
             self.clear_all_btn.hide()
-            empty = QLabel("Henüz bildirim yok.")
+            empty = QLabel("No notifications yet.")
             empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
             empty.setStyleSheet("""
                 color: #71717a;
@@ -259,7 +262,6 @@ class FastNotificationPopup(QWidget):
             self.refresh_content()
             self.move(122, 46)
             self.show()
-            self.raise_()
             self.activateWindow()
 
 if __name__ == "__main__":
@@ -277,6 +279,8 @@ if __name__ == "__main__":
     server.listen(SERVER_NAME)
 
     popup = FastNotificationPopup()
+    native_filter = FocusLossFilter(popup)
+    app.installNativeEventFilter(native_filter)
 
     def handle_connection():
         client = server.nextPendingConnection()
