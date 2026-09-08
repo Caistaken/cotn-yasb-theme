@@ -1,5 +1,12 @@
 # Cotn Yasb Theme + Phone Notification Bridge 🌙📱
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows" />
+  <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android" />
+  <img src="https://img.shields.io/badge/iOS-In%20Development-lightgrey?style=for-the-badge&logo=apple&logoColor=white" alt="iOS" />
+  <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+</p>
+
 A clean, dark, monochrome YASB (Yet Another Status Bar) setup featuring an ultra-low latency Android notification mirror and an interactive popup history panel.
 <div border="2px">
    <p align="center">
@@ -44,8 +51,7 @@ A clean, dark, monochrome YASB (Yet Another Status Bar) setup featuring an ultra
    - Automatically installs the required PyQt6 dependency.
    - Copies configuration files directly to %USERPROFILE%\.config\yasb.
 
-3. Launch YASB:
-   yasb
+3. Launch YASB
 
 ---
 
