@@ -23,7 +23,6 @@ APP_ICONS = {
 
 def ensure_services():
     if not os.path.exists(LOCK_FILE):
-        subprocess.Popen(["pyw", os.path.join(CONFIG_DIR, "phone_listener.py")], creationflags=subprocess.CREATE_NO_WINDOW)
         subprocess.Popen(["pyw", os.path.join(CONFIG_DIR, "show_popup.py")], creationflags=subprocess.CREATE_NO_WINDOW)
         with open(LOCK_FILE, "w") as f:
             f.write("1")
@@ -38,13 +37,13 @@ def get_icon(app_name):
 def format_notification():
     ensure_services()
     if not os.path.exists(DATA_FILE):
-        return "\uf0f3 Bildirim yok"
+        return "\uf0f3 No notifications"
 
     try:
         with open(DATA_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
             if not data:
-                return "\uf0f3 Bildirim yok"
+                return "\uf0f3 No notifications"
 
             latest = data[0]
             app = latest.get("app", "")
@@ -58,7 +57,7 @@ def format_notification():
 
             return f"{icon}  {app}: {content}"
     except Exception:
-        return "\uf0f3 Bildirim yok"
+        return "\uf0f3 No notifications"
 
 if __name__ == "__main__":
     print(format_notification())

@@ -1,39 +1,86 @@
 import sys
 import json
 import os
+import socket
+import threading
+import ctypes
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QFrame, QScrollArea, QPushButton
 )
-from PyQt6.QtCore import Qt, QAbstractNativeEventFilter
-from PyQt6.QtNetwork import QLocalServer, QLocalSocket
+from PyQt6.QtCore import Qt, pyqtSignal, QObject, QTimer
+from PyQt6.QtGui import QCursor
 
 DATA_FILE = os.path.expanduser(r"~\.config\yasb\phone_notifications.json")
-SERVER_NAME = "yasb_fast_phone_popup"
+TCP_PORT = 5056
+HTTP_PORT = 5055
 
-class FocusLossFilter(QAbstractNativeEventFilter):
-    def __init__(self, popup):
-        super().__init__()
-        self.popup = popup
+VK_LBUTTON = 0x01
+VK_RBUTTON = 0x02
+user32 = ctypes.windll.user32
 
-    def nativeEventFilter(self, eventType, message):
-        # Windows mesajlarını (WM_ACTIVATE = 0x0006, WA_INACTIVE = 0) yakalar
-        if eventType == b"windows_generic_MSG":
-            import ctypes
-            from ctypes import wintypes
-            msg = ctypes.cast(int(message), ctypes.POINTER(wintypes.MSG)).contents
-            if msg.message == 0x0006 and (msg.wParam & 0xFFFF) == 0:
-                if self.popup.isVisible():
-                    self.popup.hide()
-        return False, 0
+class TriggerSignal(QObject):
+    toggle = pyqtSignal()
+    data_updated = pyqtSignal()
+
+trigger = TriggerSignal()
+
+class NotificationHttpHandler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        content_length = int(self.headers.get("Content-Length", 0))
+        post_data = self.rfile.read(content_length)
+        try:
+            payload = json.loads(post_data.decode("utf-8"))
+            app = payload.get("app", "").strip()
+            title = payload.get("title", "").strip()
+            msg = payload.get("message", "").strip()
+
+            invalid = {"[not_body]", "[not_text]", "[notification_text]", "null", "None"}
+            if msg in invalid:
+                msg = ""
+            if title in invalid:
+                title = ""
+
+            cleaned = {
+                "app": app if app else "Notification",
+                "title": title,
+                "message": msg
+            }
+
+            history = []
+            if os.path.exists(DATA_FILE):
+                try:
+                    with open(DATA_FILE, "r", encoding="utf-8") as f:
+                        history = json.load(f)
+                except Exception:
+                    history = []
+
+            history.insert(0, cleaned)
+            history = history[:15]
+
+            with open(DATA_FILE, "w", encoding="utf-8") as f:
+                json.dump(history, f, ensure_ascii=False, indent=2)
+
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status":"ok"}')
+            trigger.data_updated.emit()
+        except Exception:
+            self.send_response(400)
+            self.end_headers()
+
+    def log_message(self, format, *args):
+        pass
 
 class FastNotificationPopup(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowFlags(
-            Qt.WindowType.Popup | 
+            Qt.WindowType.Tool | 
             Qt.WindowType.FramelessWindowHint | 
-            Qt.WindowType.NoDropShadowWindowHint
+            Qt.WindowType.WindowStaysOnTopHint
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setFixedWidth(340)
@@ -133,6 +180,29 @@ class FastNotificationPopup(QWidget):
         self.scroll.setWidget(self.scroll_widget)
         self.c_layout.addWidget(self.scroll)
         main_layout.addWidget(self.container)
+
+        self.watch_timer = QTimer(self)
+        self.watch_timer.setInterval(40)
+        self.watch_timer.timeout.connect(self.check_outside_click)
+
+    def check_outside_click(self):
+        if not self.isVisible():
+            self.watch_timer.stop()
+            return
+        left_down = user32.GetAsyncKeyState(VK_LBUTTON) & 0x8000
+        right_down = user32.GetAsyncKeyState(VK_RBUTTON) & 0x8000
+        if left_down or right_down:
+            if not self.geometry().contains(QCursor.pos()):
+                self.hide()
+                self.watch_timer.stop()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.watch_timer.start()
+
+    def hideEvent(self, event):
+        self.watch_timer.stop()
+        super().hideEvent(event)
 
     def load_data(self):
         if os.path.exists(DATA_FILE):
@@ -262,33 +332,39 @@ class FastNotificationPopup(QWidget):
             self.refresh_content()
             self.move(122, 46)
             self.show()
+            self.raise_()
             self.activateWindow()
+
+def run_http_server():
+    server = HTTPServer(("0.0.0.0", HTTP_PORT), NotificationHttpHandler)
+    server.serve_forever()
+
+def run_tcp_server():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind(("127.0.0.1", TCP_PORT))
+    s.listen(5)
+    while True:
+        try:
+            conn, _ = s.accept()
+            data = conn.recv(16)
+            if b"toggle" in data:
+                trigger.toggle.emit()
+            conn.close()
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    socket = QLocalSocket()
-    socket.connectToServer(SERVER_NAME)
-    if socket.waitForConnected(50):
-        socket.write(b"toggle")
-        socket.waitForBytesWritten(50)
-        sys.exit(0)
-
-    server = QLocalServer()
-    server.removeServer(SERVER_NAME)
-    server.listen(SERVER_NAME)
-
     popup = FastNotificationPopup()
-    native_filter = FocusLossFilter(popup)
-    app.installNativeEventFilter(native_filter)
+    trigger.toggle.connect(popup.toggle_popup)
+    trigger.data_updated.connect(popup.refresh_content)
 
-    def handle_connection():
-        client = server.nextPendingConnection()
-        if client:
-            client.waitForReadyRead(50)
-            cmd = client.readAll().data().decode("utf-8")
-            if cmd == "toggle":
-                popup.toggle_popup()
+    t_http = threading.Thread(target=run_http_server, daemon=True)
+    t_http.start()
 
-    server.newConnection.connect(handle_connection)
+    t_tcp = threading.Thread(target=run_tcp_server, daemon=True)
+    t_tcp.start()
+
     sys.exit(app.exec())

@@ -1,12 +1,10 @@
 watch_stylesheet: true
 watch_config: true
-debug: false
-update_check: true
 
 bars:
-  primary-bar:
+  main-bar:
     enabled: true
-    screens: ["*"]
+    screens: ['*']
     class_name: "yasb-bar"
     alignment:
       position: "top"
@@ -16,48 +14,28 @@ bars:
       acrylic: false
       dark_mode: true
       round_corners: false
-      border_color: "None"
+      border_color: "transparent"
     window_flags:
       always_on_top: true
       windows_app_bar: true
-      hide_on_fullscreen: true
     dimensions:
       width: "100%"
-      height: 38
+      height: 32
     padding:
-      top: 6
-      left: 14
+      top: 0
+      left: 0
       bottom: 0
-      right: 14
+      right: 0
     widgets:
       left:
-        - "clock"
         - "phone_notifications"
       center:
-        - "weather"
-        - "cpu"
-        - "memory"
-        - "traffic"
-        - "volume"
+        - "clock"
       right:
-        - "systray"
+        - "volume"
+        - "battery"
 
 widgets:
-  clock:
-    type: "yasb.clock.ClockWidget"
-    options:
-      label: "{%I:%M %p} <span class='sep'>|</span>"
-      label_alt: "{%A, %d %B %Y} <span class='sep'>|</span>"
-      update_interval: 1000
-      callbacks:
-        on_left: "toggle_calendar"
-        on_right: "toggle_label"
-      container_padding:
-        top: 0
-        left: 0
-        bottom: 0
-        right: 0
-
   phone_notifications:
     type: "yasb.custom.CustomWidget"
     options:
@@ -69,123 +47,41 @@ widgets:
         run_interval: 1000
         return_format: "string"
       callbacks:
-        on_left: "exec pyw %USERPROFILE%\\.config\\yasb\\show_popup.py"
+        on_left: "exec pyw %USERPROFILE%\\.config\\yasb\\show_popup.py --toggle"
       container_padding:
         top: 0
         left: 4
         bottom: 0
         right: 0
 
-  weather:
-    type: "yasb.weather.WeatherWidget"
+  clock:
+    type: "yasb.clock.ClockWidget"
     options:
-      label: "<span>{icon}</span> {temp} <span class='sep'>|</span>"
-      api_key: "f5bc02da05ce44f0b29231930251207"
-      show_alerts: true
-      update_interval: 600
-      hide_decimal: true
-      units: "metric"
-      location: "Istanbul, Turkey"
+      label: "{%a %d %b %H:%M}"
+      label_alt: "{%A %d %B %Y %H:%M:%S}"
+      timezones: []
       callbacks:
-        on_left: "toggle_card"
-        on_middle: "do_nothing"
-        on_right: "toggle_label"
-      icons:
-        sunnyDay: "\ue30d"
-        clearNight: "\ue32b"
-        cloudyDay: "\ue312"
-        cloudyNight: "\ue311"
-        rainyDay: "\ue308"
-        rainyNight: "\ue333"
-        snowyDay: "\ue30a"
-        snowyNight: "\ue335"
-        blizzardDay: "\udb83\udf36"
-        blizzardNight: "\udb83\udf36"
-        foggyDay: "\ue303"
-        foggyNight: "\ue346"
-        thunderstormDay: "\ue30f"
-        thunderstormNight: "\ue338"
-        default: "\uebaa"
-      container_padding:
-        top: 0
-        left: 0
-        bottom: 0
-        right: 0
-
-  cpu:
-    type: "yasb.cpu.CpuWidget"
-    options:
-      label: "<span>\uf4bc</span> {info[percent][total]}%"
-      label_alt: "{info[histograms][cpu_percent]}"
-      update_interval: 1000
-      callbacks:
-        on_left: "toggle_cpu_menu"
-        on_middle: "exec cmd /c Taskmgr"
-        on_right: "toggle_label"
-      container_padding:
-        top: 0
-        left: 0
-        bottom: 0
-        right: 0
-
-  memory:
-    type: "yasb.memory.MemoryWidget"
-    options:
-      label: "<span>\uefc5</span> {virtual_mem_used}/{virtual_mem_total} <span class='sep'>|</span>"
-      update_interval: 5000
-      callbacks:
-        on_left: "do_nothing"
-        on_middle: "do_nothing"
-        on_right: "do_nothing"
-      container_padding:
-        top: 0
-        left: 0
-        bottom: 0
-        right: 0
-
-  traffic:
-    type: "yasb.traffic.TrafficWidget"
-    options:
-      label: "<span class='download'>\udb81\udf2e {download_speed}</span> <span class='upload'>\udb81\udf37 {upload_speed}</span> <span class='sep'>|</span>"
-      update_interval: 1000
-      container_padding:
-        top: 0
-        left: 0
-        bottom: 0
-        right: 0
+        on_left: "toggle_label"
 
   volume:
     type: "yasb.volume.VolumeWidget"
     options:
-      label: "<span>{icon}</span> {level}%"
+      label: "󰕾 {volume}%"
+      label_alt: "󰕾 {volume}%"
       volume_icons:
-        - "\udb81\udf5f"
-        - "\udb81\udf5e"
-        - "\udb81\udf5d"
-        - "\uf028"
-        - "\uf028"
+        - "󰝟"
+        - "󰕿"
+        - "󰖀"
+        - "󰕾"
       callbacks:
-        on_left: "toggle_volume_menu"
-        on_right: "toggle_mute"
-      container_padding:
-        top: 0
-        left: 0
-        bottom: 0
-        right: 0
+        on_left: "toggle_mute"
+        on_middle: "toggle_label"
+        on_right: "exec cmd.exe /c start ms-settings:sound"
 
-  systray:
-    type: "yasb.systray.SystrayWidget"
+  battery:
+    type: "yasb.battery.BatteryWidget"
     options:
-      class_name: "systray"
-      label_collapsed: "\ue893"
-      label_expanded: "\udb80\udd56"
-      show_unpinned: false
-      show_unpinned_button: true
-      show_battery: false
-      show_volume: false
-      show_network: false
-      container_padding:
-        top: 0
-        left: 0
-        bottom: 0
-        right: 0
+      label: "{percent}%"
+      label_alt: "{percent}% ({time_remaining})"
+      callbacks:
+        on_left: "toggle_label"
