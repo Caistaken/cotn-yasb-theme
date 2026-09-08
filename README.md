@@ -1,7 +1,19 @@
 # Cotn Yasb Theme + Phone Notification Bridge 🌙📱
 
 A clean, dark, monochrome YASB (Yet Another Status Bar) setup featuring an ultra-low latency Android notification mirror and an interactive popup history panel.
-
+<div border="2px">
+   <p align="center">
+      <p>
+         <img width="1919" height="54" alt="barpreview" src="https://github.com/user-attachments/assets/2cb244c7-3eca-4ab3-9fe8-d1b191362859" />
+      </p>
+      <img width="377" height="250" alt="notif" src="https://github.com/user-attachments/assets/3bd426f8-90d7-47b6-bba7-76494ece80bc" />
+      <img width="324" height="279" alt="date" src="https://github.com/user-attachments/assets/b84d1f4b-ece0-4e48-ba21-cb38c06032a5" />
+      <p>
+         <img width="575" height="55" alt="rightclick_alternative" src="https://github.com/user-attachments/assets/a8e004b3-a336-4cbc-96ea-392b3d693463" />
+      </p>
+      
+   </p>
+</div>
 ## Features
 
 - Local Network Notification Bridge: Receive instant alerts from apps like WhatsApp, X (Twitter), Instagram, and Discord directly on your status bar.
@@ -9,7 +21,6 @@ A clean, dark, monochrome YASB (Yet Another Status Bar) setup featuring an ultra
 - Dynamic Window Sizing: Compact 100px footprint when empty, dynamically expanding up to 360px as notifications arrive.
 - Granular Controls: Clear all notifications or dismiss individual entries.
 - Headless Background Services: Runs cleanly via background daemons without persistent command prompt windows.
-
 ---
 
 ## Prerequisites & Recommendations
