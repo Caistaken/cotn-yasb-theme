@@ -310,8 +310,10 @@ class FastNotificationPopup(QWidget):
                 self.list_layout.addWidget(card)
 
             self.list_layout.addStretch()
+            self.setMinimumHeight(0)
             self.setMaximumHeight(360)
             self.adjustSize()
+            self.resize(340, min(self.sizeHint().height(), 360))
         else:
             self.clear_all_btn.hide()
             empty = QLabel("No notifications yet.")
@@ -323,7 +325,9 @@ class FastNotificationPopup(QWidget):
                 font-family: 'SpaceMono Nerd Font', monospace;
             """)
             self.list_layout.addWidget(empty)
-            self.setFixedHeight(100)
+            self.setMinimumHeight(100)
+            self.setMaximumHeight(100)
+            self.resize(340, 100)
 
     def toggle_popup(self):
         if self.isVisible():
