@@ -1,0 +1,139 @@
+* {
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+  font-family: "SpaceMono Nerd Font", monospace;
+  font-size: 13px;
+  color: #e2e4e9;
+}
+
+/* ANA BAR */
+.yasb-bar {
+  background-color: rgba(10, 10, 14, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 0 10px;
+}
+
+/* AYRAÇ (|) ÇİZGİLERİ */
+.sep {
+  color: rgba(255, 255, 255, 0.25);
+  font-weight: normal;
+  padding-left: 8px;
+  padding-right: 4px;
+}
+
+/* SOL: SAAT */
+.clock-widget .label {
+  color: #ffffff;
+  font-weight: bold;
+}
+
+/* SOL: TELEFON BİLDİRİMİ */
+.custom-widget {
+  margin-left: 6px;
+}
+
+.custom-widget .label {
+  color: #c4b5fd;
+  font-family: "SpaceMono Nerd Font", monospace;
+  font-size: 12px;
+}
+
+/* ORTA: HAVA DURUMU */
+.weather-widget .label,
+.weather-widget .icon {
+  color: #9ba1b0;
+}
+
+/* ORTA: İŞLEMCİ & RAM (BİRLEŞİK BLOK) */
+.cpu-widget {
+  margin-left: 4px;
+  margin-right: 8px;
+}
+.cpu-widget .label,
+.cpu-widget .icon {
+  color: #c4b5fd;
+}
+
+.memory-widget .label,
+.memory-widget .icon {
+  color: #a1a1aa;
+}
+
+/* ORTA: İNTERNET */
+.traffic-widget {
+  margin-left: 4px;
+}
+.traffic-widget .download {
+  color: #e4e4e7;
+  margin-right: 4px;
+}
+.traffic-widget .upload {
+  color: #71717a;
+}
+
+/* ORTA: SES */
+.volume-widget {
+  margin-left: 4px;
+}
+.volume-widget .label,
+.volume-widget .icon {
+  color: #ffffff;
+}
+
+/* SAĞ: SYSTRAY */
+.systray {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.systray .button {
+  padding: 0 3px;
+  margin: 0 1px;
+}
+
+.systray .unpinned-visibility-btn {
+  color: #71717a;
+  font-size: 13px;
+  padding-right: 2px;
+}
+
+/* YEREL BİLDİRİM WİDGETI */
+.phone-widget .label {
+  color: #c4b5fd;
+  font-family: "SpaceMono Nerd Font", monospace;
+  font-size: 12px;
+}
+
+#phone-notification-menu {
+  background-color: rgba(12, 12, 16, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+}
+
+#phone-notification-menu #menu-header {
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 4px;
+}
+
+#notif-card {
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+}
+
+#notif-title {
+  color: #c4b5fd;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+#notif-body {
+  color: #d1d5db;
+  font-size: 11px;
+}
