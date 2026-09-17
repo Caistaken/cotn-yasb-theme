@@ -20,6 +20,36 @@ VK_LBUTTON = 0x01
 VK_RBUTTON = 0x02
 user32 = ctypes.windll.user32
 
+class ACCENT_POLICY(ctypes.Structure):
+    _fields_ = [
+        ("AccentState", ctypes.c_int),
+        ("AccentFlags", ctypes.c_int),
+        ("GradientColor", ctypes.c_int),
+        ("AnimationId", ctypes.c_int)
+    ]
+
+class WINDOWCOMPOSITIONATTRIBDATA(ctypes.Structure):
+    _fields_ = [
+        ("Attribute", ctypes.c_int),
+        ("Data", ctypes.c_void_p),
+        ("SizeOfData", ctypes.c_size_t)
+    ]
+
+def enable_acrylic_blur(hwnd):
+    try:
+        accent = ACCENT_POLICY()
+        accent.AccentState = 3
+        accent.AccentFlags = 2
+        accent.GradientColor = 0x88121212
+
+        data = WINDOWCOMPOSITIONATTRIBDATA()
+        data.Attribute = 19
+        data.Data = ctypes.cast(ctypes.byref(accent), ctypes.c_void_p)
+        data.SizeOfData = ctypes.sizeof(accent)
+        user32.SetWindowCompositionAttribute(hwnd, ctypes.byref(data))
+    except Exception:
+        pass
+
 class TriggerSignal(QObject):
     toggle = pyqtSignal()
     data_updated = pyqtSignal()
@@ -31,7 +61,7 @@ class NotificationHttpHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers.get("Content-Length", 0))
         post_data = self.rfile.read(content_length)
         try:
-            payload = json.loads(post_data.decode("utf-8"))
+            payload = json.loads(post_data.decode("utf-8", errors="replace"))
             app = payload.get("app", "").strip()
             title = payload.get("title", "").strip()
             msg = payload.get("message", "").strip()
@@ -51,7 +81,7 @@ class NotificationHttpHandler(BaseHTTPRequestHandler):
             history = []
             if os.path.exists(DATA_FILE):
                 try:
-                    with open(DATA_FILE, "r", encoding="utf-8") as f:
+                    with open(DATA_FILE, "r", encoding="utf-8", errors="replace") as f:
                         history = json.load(f)
                 except Exception:
                     history = []
@@ -90,11 +120,12 @@ class FastNotificationPopup(QWidget):
 
         self.container = QFrame()
         self.container.setObjectName("mainContainer")
+        self.container.setFixedWidth(340)
         self.container.setStyleSheet("""
             QFrame#mainContainer {
-                background-color: rgba(12, 12, 16, 0.98);
-                border: 1px solid rgba(255, 255, 255, 0.16);
-                border-radius: 8px;
+                background-color: rgba(18, 18, 22, 0.75);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 12px;
             }
         """)
         self.c_layout = QVBoxLayout(self.container)
@@ -106,7 +137,7 @@ class FastNotificationPopup(QWidget):
 
         title_label = QLabel("Notification History")
         title_label.setStyleSheet("""
-            color: #f3f4f6;
+            color: rgba(243, 244, 246, 0.95);
             font-size: 12px;
             font-weight: 700;
             border: none;
@@ -118,7 +149,7 @@ class FastNotificationPopup(QWidget):
         self.clear_all_btn.setStyleSheet("""
             QPushButton {
                 background-color: transparent;
-                color: #71717a;
+                color: #a1a1aa;
                 border: none;
                 font-size: 11px;
                 font-weight: 600;
@@ -128,7 +159,7 @@ class FastNotificationPopup(QWidget):
             }
             QPushButton:hover {
                 color: #ef4444;
-                background-color: rgba(239, 68, 68, 0.1);
+                background-color: rgba(239, 68, 68, 0.2);
             }
         """)
         self.clear_all_btn.clicked.connect(self.clear_all_notifications)
@@ -141,6 +172,7 @@ class FastNotificationPopup(QWidget):
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.scroll.setStyleSheet("""
             QScrollArea {
                 background: transparent;
@@ -172,6 +204,7 @@ class FastNotificationPopup(QWidget):
         """)
 
         self.scroll_widget = QWidget()
+        self.scroll_widget.setFixedWidth(312)
         self.scroll_widget.setStyleSheet("background: transparent;")
         self.list_layout = QVBoxLayout(self.scroll_widget)
         self.list_layout.setContentsMargins(0, 0, 4, 0)
@@ -198,6 +231,7 @@ class FastNotificationPopup(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)
+        enable_acrylic_blur(int(self.winId()))
         self.watch_timer.start()
 
     def hideEvent(self, event):
@@ -207,7 +241,7 @@ class FastNotificationPopup(QWidget):
     def load_data(self):
         if os.path.exists(DATA_FILE):
             try:
-                with open(DATA_FILE, "r", encoding="utf-8") as f:
+                with open(DATA_FILE, "r", encoding="utf-8", errors="replace") as f:
                     return json.load(f)
             except Exception:
                 return []
@@ -244,11 +278,12 @@ class FastNotificationPopup(QWidget):
             self.clear_all_btn.show()
             for idx, n in enumerate(notifications):
                 card = QFrame()
+                card.setFixedWidth(308)
                 card.setStyleSheet("""
                     QFrame {
                         background-color: rgba(255, 255, 255, 0.04);
-                        border: 1px solid rgba(255, 255, 255, 0.08);
-                        border-radius: 6px;
+                        border: 1px solid rgba(255, 255, 255, 0.06);
+                        border-radius: 8px;
                     }
                 """)
                 card_layout = QVBoxLayout(card)
@@ -258,9 +293,11 @@ class FastNotificationPopup(QWidget):
                 top_row = QHBoxLayout()
                 top_row.setContentsMargins(0, 0, 0, 0)
 
-                app_name = n.get("app", "Notification")
-                title_text = n.get("title", "")
+                app_name = str(n.get("app", "Notification"))
+                title_text = str(n.get("title", ""))
                 header_text = f"{app_name} • {title_text}".strip(" •")
+                if len(header_text) > 34:
+                    header_text = header_text[:31] + "..."
                 
                 app_title = QLabel(header_text)
                 app_title.setStyleSheet("""
@@ -277,7 +314,7 @@ class FastNotificationPopup(QWidget):
                 del_btn.setStyleSheet("""
                     QPushButton {
                         background-color: transparent;
-                        color: #71717a;
+                        color: #a1a1aa;
                         border: none;
                         font-size: 10px;
                         font-weight: bold;
@@ -295,12 +332,13 @@ class FastNotificationPopup(QWidget):
                 top_row.addWidget(del_btn)
                 card_layout.addLayout(top_row)
 
-                msg_str = n.get("message", "").strip()
+                msg_str = str(n.get("message", "")).strip()
                 if msg_str:
                     msg = QLabel(msg_str)
                     msg.setWordWrap(True)
+                    msg.setFixedWidth(288)
                     msg.setStyleSheet("""
-                        color: #d1d5db;
+                        color: #e4e4e7;
                         font-size: 11px;
                         border: none;
                         font-family: 'SpaceMono Nerd Font', monospace;
@@ -310,16 +348,19 @@ class FastNotificationPopup(QWidget):
                 self.list_layout.addWidget(card)
 
             self.list_layout.addStretch()
+            total_h = self.scroll_widget.sizeHint().height() + 56
+            final_h = min(max(total_h, 110), 380)
+
             self.setMinimumHeight(0)
-            self.setMaximumHeight(360)
-            self.adjustSize()
-            self.resize(340, min(self.sizeHint().height(), 360))
+            self.setMaximumHeight(380)
+            self.scroll.setMaximumHeight(330)
+            self.resize(340, final_h)
         else:
             self.clear_all_btn.hide()
             empty = QLabel("No notifications yet.")
             empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
             empty.setStyleSheet("""
-                color: #71717a;
+                color: #a1a1aa;
                 font-size: 11px;
                 border: none;
                 font-family: 'SpaceMono Nerd Font', monospace;
@@ -327,6 +368,7 @@ class FastNotificationPopup(QWidget):
             self.list_layout.addWidget(empty)
             self.setMinimumHeight(100)
             self.setMaximumHeight(100)
+            self.scroll.setMaximumHeight(60)
             self.resize(340, 100)
 
     def toggle_popup(self):
@@ -340,23 +382,29 @@ class FastNotificationPopup(QWidget):
             self.activateWindow()
 
 def run_http_server():
-    server = HTTPServer(("0.0.0.0", HTTP_PORT), NotificationHttpHandler)
-    server.serve_forever()
+    try:
+        server = HTTPServer(("0.0.0.0", HTTP_PORT), NotificationHttpHandler)
+        server.serve_forever()
+    except Exception:
+        pass
 
 def run_tcp_server():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind(("127.0.0.1", TCP_PORT))
-    s.listen(5)
-    while True:
-        try:
-            conn, _ = s.accept()
-            data = conn.recv(16)
-            if b"toggle" in data:
-                trigger.toggle.emit()
-            conn.close()
-        except Exception:
-            pass
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind(("127.0.0.1", TCP_PORT))
+        s.listen(5)
+        while True:
+            try:
+                conn, _ = s.accept()
+                data = conn.recv(16)
+                if b"toggle" in data:
+                    trigger.toggle.emit()
+                conn.close()
+            except Exception:
+                pass
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
